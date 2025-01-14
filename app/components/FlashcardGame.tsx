@@ -760,7 +760,7 @@ const FlashcardGame = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-2xl mx-auto p-4 min-h-screen dark:bg-gray-900 dark:text-white transition-colors duration-200">
+    <div className="flex flex-col items-center gap-4 w-full max-w-2xl mx-auto p-4 dark:bg-gray-900 dark:text-white transition-colors duration-200">
       {/* Theme Toggle Button */}
       <Button
         variant="outline"
@@ -776,7 +776,7 @@ const FlashcardGame = () => {
       </Button>
 
       {/* Progress Section */}
-      <div className="w-full text-center space-y-2">
+      <div className="w-full text-center space-y-2 mb-4">
         <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             Card {currentCardIndex + 1} of {cards.length}
@@ -796,84 +796,86 @@ const FlashcardGame = () => {
           Overall Progress: {Math.round((totalScore / 5) * 100)}%
         </div>
       </div>
-      
-      {/* Flashcard */}
-      <Card 
-        className="w-full aspect-[3/2] max-h-80 cursor-pointer perspective-1000 dark:bg-gray-800 dark:border-gray-700 sm:h-64"
-        onClick={toggleFlip}
-      >
-        <CardContent className="h-full flex items-center justify-center p-4 sm:p-6 text-center">
-          {!isFlipped ? (
-            <div className="text-2xl sm:text-3xl font-bold dark:text-white">
-              {cards[currentCardIndex].word}
-            </div>
-          ) : (
-            <div className="space-y-3 sm:space-y-4">
-              <p className="text-lg sm:text-xl text-blue-600 dark:text-blue-400">
-                {cards[currentCardIndex].pinyin}
-              </p>
-              <p className="text-base sm:text-lg font-medium dark:text-gray-200">
-                {cards[currentCardIndex].translation}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                {cards[currentCardIndex].example}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Rating Buttons */}
-      {showScore && (
-        <div className="space-y-2 w-full">
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-            How well did you know this word?
-          </p>
-          <div className="flex justify-center gap-2">
-            {[1, 2, 3, 4, 5].map((rating) => (
-              <Button
-                key={rating}
-                variant={cards[currentCardIndex].score >= rating ? "default" : "outline"}
-                onClick={() => rateCard(rating)}
-                className="w-10 h-10 sm:w-12 sm:h-12 dark:border-gray-700"
-              >
-                {rating}
-              </Button>
-            ))}
-          </div>
+      <div className="w-full space-y-4">
+        {/* Flashcard */}
+        <Card 
+          className="w-full aspect-[3/2] max-h-80 cursor-pointer perspective-1000 dark:bg-gray-800 dark:border-gray-700 sm:h-64"
+          onClick={toggleFlip}
+        >
+          <CardContent className="h-full flex items-center justify-center p-4 sm:p-6 text-center">
+            {!isFlipped ? (
+              <div className="text-2xl sm:text-3xl font-bold dark:text-white">
+                {cards[currentCardIndex].word}
+              </div>
+            ) : (
+              <div className="space-y-3 sm:space-y-4">
+                <p className="text-lg sm:text-xl text-blue-600 dark:text-blue-400">
+                  {cards[currentCardIndex].pinyin}
+                </p>
+                <p className="text-base sm:text-lg font-medium dark:text-gray-200">
+                  {cards[currentCardIndex].translation}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {cards[currentCardIndex].example}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-center w-full gap-2 sm:gap-4">
+          <Button 
+            variant="outline"
+            onClick={previousCard}
+            disabled={currentCardIndex === 0}
+            className="dark:border-gray-700"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Previous</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={shuffleCards}
+            className="dark:border-gray-700"
+          >
+            <RotateCcw className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Shuffle</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={nextCard}
+            disabled={currentCardIndex === cards.length - 1}
+            className="dark:border-gray-700"
+          >
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="h-4 w-4 ml-1 sm:ml-2" />
+          </Button>
         </div>
-      )}
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between w-full max-w-md gap-2 sm:gap-4 mt-auto">
-        <Button 
-          variant="outline"
-          onClick={previousCard}
-          disabled={currentCardIndex === 0}
-          className="dark:border-gray-700"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1 sm:mr-2" />
-          <span className="hidden sm:inline">Previous</span>
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={shuffleCards}
-          className="dark:border-gray-700"
-        >
-          <RotateCcw className="h-4 w-4 mr-1 sm:mr-2" />
-          <span className="hidden sm:inline">Shuffle</span>
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={nextCard}
-          disabled={currentCardIndex === cards.length - 1}
-          className="dark:border-gray-700"
-        >
-          <span className="hidden sm:inline">Next</span>
-          <ChevronRight className="h-4 w-4 ml-1 sm:ml-2" />
-        </Button>
+        {/* Rating Buttons */}
+        {showScore && (
+          <div className="space-y-2 w-full">
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+              How well did you know this word?
+            </p>
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <Button
+                  key={rating}
+                  variant={cards[currentCardIndex].score >= rating ? "default" : "outline"}
+                  onClick={() => rateCard(rating)}
+                  className="w-10 h-10 sm:w-12 sm:h-12 dark:border-gray-700"
+                >
+                  {rating}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
