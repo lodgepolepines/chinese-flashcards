@@ -8,18 +8,18 @@ import { flashcardsData } from '../data/flashcardData';
 
 const FlashcardGame = () => {
     // Function to shuffle array
-    const shuffleArray = (array: any) => {
-      const shuffled = [...array].sort(() => Math.random() - 0.5);
-      return shuffled.map(card => ({ ...card, score: 0, attempts: 0 }));
-    };
-  
+    const shuffleArray = <T extends object>(array: T[]): (T & { score: number; attempts: number })[] => {
+        const shuffled = [...array].sort(() => Math.random() - 0.5);
+        return shuffled.map(card => ({ ...card, score: 0, attempts: 0 }));
+      };
+      
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [cards, setCards] = useState(() => shuffleArray(flashcardsData)); // Initialize with shuffled cards
     const [showScore, setShowScore] = useState(false);
     const [totalScore, setTotalScore] = useState(0);
     const [mastered, setMastered] = useState(0);
-    const [theme, setTheme] = useState('light');
+    const [theme, setTheme] = useState('dark');
     const [cardsStudied, setCardsStudied] = useState(new Set());
 
   // Initialize theme from system preference
@@ -57,6 +57,7 @@ const FlashcardGame = () => {
       setCurrentCardIndex(currentCardIndex + 1);
       setIsFlipped(false);
       setShowScore(false);
+      setCardsStudied(prev => new Set(prev).add(currentCardIndex));
     }
   };
 
@@ -72,7 +73,6 @@ const FlashcardGame = () => {
     setIsFlipped(!isFlipped);
     if (!isFlipped) {
       setShowScore(true);
-      setCardsStudied(prev => new Set(prev).add(currentCardIndex));
     }
   };
 
@@ -105,7 +105,7 @@ const FlashcardGame = () => {
         variant="outline"
         size="icon"
         className="absolute top-4 right-4"
-        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        onClick={toggleTheme}
       >
         {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
       </Button>
