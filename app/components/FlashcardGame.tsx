@@ -14,7 +14,7 @@ const FlashcardGame = () => {
   const [showScore, setShowScore] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
   const [mastered, setMastered] = useState(0);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
 
   // Initialize theme from system preference
   useEffect(() => {
