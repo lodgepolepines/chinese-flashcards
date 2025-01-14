@@ -24,6 +24,9 @@ const FlashcardGame = () => {
 
   // Initialize theme from system preference
   useEffect(() => {
+    if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      };
     if (typeof window !== 'undefined') {
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         setTheme('dark');
