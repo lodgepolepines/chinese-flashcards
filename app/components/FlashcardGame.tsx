@@ -7,14 +7,20 @@ import { Progress } from '@/components/ui/progress';
 import { flashcardsData } from '../data/flashcardData';
 
 const FlashcardGame = () => {
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  //const [isShuffled, setIsShuffled] = useState(false);
-  const [cards, setCards] = useState(flashcardsData.map(card => ({ ...card, score: 0, attempts: 0 })));
-  const [showScore, setShowScore] = useState(false);
-  const [totalScore, setTotalScore] = useState(0);
-  const [mastered, setMastered] = useState(0);
-  const [theme, setTheme] = useState('light');
+    // Function to shuffle array
+    const shuffleArray = (array) => {
+      const shuffled = [...array].sort(() => Math.random() - 0.5);
+      return shuffled.map(card => ({ ...card, score: 0, attempts: 0 }));
+    };
+  
+    const [currentCardIndex, setCurrentCardIndex] = useState(0);
+    const [isFlipped, setIsFlipped] = useState(false);
+    const [cards, setCards] = useState(() => shuffleArray(flashcardsData)); // Initialize with shuffled cards
+    const [showScore, setShowScore] = useState(false);
+    const [totalScore, setTotalScore] = useState(0);
+    const [mastered, setMastered] = useState(0);
+    const [theme, setTheme] = useState('light');
+    const [cardsStudied, setCardsStudied] = useState(new Set());
 
   // Initialize theme from system preference
   useEffect(() => {
@@ -39,11 +45,11 @@ const FlashcardGame = () => {
   };
 
   const shuffleCards = () => {
-    const shuffled = [...cards].sort(() => Math.random() - 0.5);
-    setCards(shuffled);
+    setCards(shuffleArray(flashcardsData));
     setCurrentCardIndex(0);
     setIsFlipped(false);
-    //setIsShuffled(true);
+    setShowScore(false);
+    setCardsStudied(new Set());
   };
 
   const nextCard = () => {
@@ -66,6 +72,7 @@ const FlashcardGame = () => {
     setIsFlipped(!isFlipped);
     if (!isFlipped) {
       setShowScore(true);
+      setCardsStudied(prev => new Set(prev).add(currentCardIndex));
     }
   };
 
@@ -76,14 +83,12 @@ const FlashcardGame = () => {
     card.score = ((card.score * (card.attempts - 1)) + rating) / card.attempts;
     setCards(updatedCards);
     
-    // Update total score and mastered count
     const newTotalScore = updatedCards.reduce((sum, card) => sum + card.score, 0) / updatedCards.length;
     setTotalScore(newTotalScore);
     
     const newMastered = updatedCards.filter(card => card.score >= 4).length;
     setMastered(newMastered);
     
-    // Automatically move to next card after rating
     setTimeout(() => {
       if (currentCardIndex < cards.length - 1) {
         nextCard();
@@ -91,25 +96,46 @@ const FlashcardGame = () => {
     }, 500);
   };
 
+  const progressPercentage = (cardsStudied.size / cards.length) * 100;
+
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-2xl mx-auto p-4 dark:bg-gray-900 dark:text-white transition-colors duration-200">
-      {/* Theme Toggle Button */}
+      {/* Theme Toggle */}
       <Button
         variant="outline"
         size="icon"
         className="absolute top-4 right-4"
-        onClick={toggleTheme}
+        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
       >
-        {theme === 'light' ? (
-          <Moon className="h-4 w-4" />
-        ) : (
-          <Sun className="h-4 w-4" />
-        )}
+        {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
       </Button>
 
       {/* Progress Section */}
-      <div className="w-full text-center space-y-2 mb-4">
-        <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
+      <div className="w-full space-y-3">
+        {/* Study Progress */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+            <span>Study Progress</span>
+            <span>{Math.round(progressPercentage)}% Complete</span>
+          </div>
+          <Progress value={progressPercentage} className="h-2" />
+        </div>
+
+        {/* Mastery Progress */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+            <span>Mastery Level</span>
+            <span>{Math.round((totalScore / 5) * 100)}%</span>
+          </div>
+          <Progress value={(totalScore / 5) * 100} className="h-2 bg-gray-200 dark:bg-gray-700">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500 rounded-full"
+              style={{ width: `${(totalScore / 5) * 100}%` }}
+            />
+          </Progress>
+        </div>
+
+        <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             Card {currentCardIndex + 1} of {cards.length}
           </span>
@@ -119,13 +145,6 @@ const FlashcardGame = () => {
               Mastered: {mastered}/{cards.length}
             </span>
           </div>
-        </div>
-        <Progress 
-          value={(totalScore / 5) * 100} 
-          className="w-full dark:bg-gray-700"
-        />
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Overall Progress: {Math.round((totalScore / 5) * 100)}%
         </div>
       </div>
 
