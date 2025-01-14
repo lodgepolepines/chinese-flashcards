@@ -8,7 +8,7 @@ import { flashcardsData } from '../data/flashcardData';
 
 const FlashcardGame = () => {
     // Function to shuffle array
-    const shuffleArray = (array) => {
+    const shuffleArray = (array: any) => {
       const shuffled = [...array].sort(() => Math.random() - 0.5);
       return shuffled.map(card => ({ ...card, score: 0, attempts: 0 }));
     };
