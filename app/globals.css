@@ -70,18 +70,3 @@ body {
     @apply bg-background text-foreground;
   }
 }
-
-:root {
-  --foreground: #000000;
-  --background: #ffffff;
-}
-
-.dark {
-  --foreground: #ffffff;
-  --background: #111827;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-}
