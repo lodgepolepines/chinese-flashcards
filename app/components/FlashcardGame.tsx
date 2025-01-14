@@ -1,8 +1,8 @@
 "use client"; 
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, RotateCcw, Trophy } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Trophy, Sun, Moon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const flashcardsData = [
@@ -682,6 +682,29 @@ const FlashcardGame = () => {
   const [showScore, setShowScore] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
   const [mastered, setMastered] = useState(0);
+  const [theme, setTheme] = useState('dark');
+
+  // Initialize theme from system preference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setTheme('dark');
+        document.documentElement.classList.add('dark');
+      }
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => {
+      const newTheme = prevTheme === 'light' ? 'dark' : 'light';
+      if (newTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      return newTheme;
+    });
+  };
 
   const shuffleCards = () => {
     const shuffled = [...cards].sort(() => Math.random() - 0.5);
@@ -737,52 +760,82 @@ const FlashcardGame = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-2xl mx-auto p-4">
+    <div className="flex flex-col items-center gap-4 w-full max-w-2xl mx-auto p-4 min-h-screen dark:bg-gray-900 dark:text-white transition-colors duration-200">
+      {/* Theme Toggle Button */}
+      <Button
+        variant="outline"
+        size="icon"
+        className="absolute top-4 right-4"
+        onClick={toggleTheme}
+      >
+        {theme === 'light' ? (
+          <Moon className="h-4 w-4" />
+        ) : (
+          <Sun className="h-4 w-4" />
+        )}
+      </Button>
+
+      {/* Progress Section */}
       <div className="w-full text-center space-y-2">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-gray-500">
+        <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             Card {currentCardIndex + 1} of {cards.length}
           </span>
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-yellow-500" />
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Mastered: {mastered}/{cards.length}
             </span>
           </div>
         </div>
-        <Progress value={(totalScore / 5) * 100} className="w-full" />
-        <div className="text-sm text-gray-500">
+        <Progress 
+          value={(totalScore / 5) * 100} 
+          className="w-full dark:bg-gray-700"
+        />
+        <div className="text-sm text-gray-500 dark:text-gray-400">
           Overall Progress: {Math.round((totalScore / 5) * 100)}%
         </div>
       </div>
       
+      {/* Flashcard */}
       <Card 
-        className="w-full h-64 cursor-pointer perspective-1000"
+        className="w-full aspect-[3/2] max-h-80 cursor-pointer perspective-1000 dark:bg-gray-800 dark:border-gray-700 sm:h-64"
         onClick={toggleFlip}
       >
-        <CardContent className="h-full flex items-center justify-center p-6 text-center">
+        <CardContent className="h-full flex items-center justify-center p-4 sm:p-6 text-center">
           {!isFlipped ? (
-            <div className="text-3xl font-bold">{cards[currentCardIndex].word}</div>
+            <div className="text-2xl sm:text-3xl font-bold dark:text-white">
+              {cards[currentCardIndex].word}
+            </div>
           ) : (
-            <div className="space-y-4">
-              <p className="text-xl text-blue-600">{cards[currentCardIndex].pinyin}</p>
-              <p className="text-lg font-medium">{cards[currentCardIndex].translation}</p>
-              <p className="text-sm text-gray-600">{cards[currentCardIndex].example}</p>
+            <div className="space-y-3 sm:space-y-4">
+              <p className="text-lg sm:text-xl text-blue-600 dark:text-blue-400">
+                {cards[currentCardIndex].pinyin}
+              </p>
+              <p className="text-base sm:text-lg font-medium dark:text-gray-200">
+                {cards[currentCardIndex].translation}
+              </p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                {cards[currentCardIndex].example}
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
+      {/* Rating Buttons */}
       {showScore && (
         <div className="space-y-2 w-full">
-          <p className="text-center text-sm text-gray-600">How well did you know this word?</p>
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+            How well did you know this word?
+          </p>
           <div className="flex justify-center gap-2">
             {[1, 2, 3, 4, 5].map((rating) => (
               <Button
                 key={rating}
                 variant={cards[currentCardIndex].score >= rating ? "default" : "outline"}
                 onClick={() => rateCard(rating)}
-                className="w-12 h-12"
+                className="w-10 h-10 sm:w-12 sm:h-12 dark:border-gray-700"
               >
                 {rating}
               </Button>
@@ -791,31 +844,35 @@ const FlashcardGame = () => {
         </div>
       )}
 
-      <div className="flex justify-between w-full max-w-md gap-4">
+      {/* Navigation Buttons */}
+      <div className="flex justify-between w-full max-w-md gap-2 sm:gap-4 mt-auto">
         <Button 
           variant="outline"
           onClick={previousCard}
           disabled={currentCardIndex === 0}
+          className="dark:border-gray-700"
         >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Previous
+          <ChevronLeft className="h-4 w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Previous</span>
         </Button>
 
         <Button
           variant="outline"
           onClick={shuffleCards}
+          className="dark:border-gray-700"
         >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Shuffle
+          <RotateCcw className="h-4 w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Shuffle</span>
         </Button>
 
         <Button
           variant="outline"
           onClick={nextCard}
           disabled={currentCardIndex === cards.length - 1}
+          className="dark:border-gray-700"
         >
-          Next
-          <ChevronRight className="h-4 w-4 ml-2" />
+          <span className="hidden sm:inline">Next</span>
+          <ChevronRight className="h-4 w-4 ml-1 sm:ml-2" />
         </Button>
       </div>
     </div>
