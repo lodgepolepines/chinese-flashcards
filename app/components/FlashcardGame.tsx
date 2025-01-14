@@ -677,7 +677,7 @@ const flashcardsData = [
 const FlashcardGame = () => {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isShuffled, setIsShuffled] = useState(false);
+  //const [isShuffled, setIsShuffled] = useState(false);
   const [cards, setCards] = useState(flashcardsData.map(card => ({ ...card, score: 0, attempts: 0 })));
   const [showScore, setShowScore] = useState(false);
   const [totalScore, setTotalScore] = useState(0);
@@ -688,7 +688,7 @@ const FlashcardGame = () => {
     setCards(shuffled);
     setCurrentCardIndex(0);
     setIsFlipped(false);
-    setIsShuffled(true);
+    //setIsShuffled(true);
   };
 
   const nextCard = () => {
@@ -714,7 +714,7 @@ const FlashcardGame = () => {
     }
   };
 
-  const rateCard = (rating) => {
+  const rateCard = (rating: number) => {
     const updatedCards = [...cards];
     const card = updatedCards[currentCardIndex];
     card.attempts += 1;
