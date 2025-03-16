@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+/** @type {import('next').NextConfig} */
 
 const isProd = process.env.NODE_ENV === 'production';
 const nextConfig = {
@@ -8,7 +8,7 @@ const nextConfig = {
   },
   assetPrefix: isProd ? '/chinese-flashcards/' : '',
   basePath: isProd ? '/chinese-flashcards' : '',
-  output: 'export'
+  // output: 'export'
 };
 
-export default nextConfig;
+module.exports = nextConfig
