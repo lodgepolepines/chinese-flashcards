@@ -26,7 +26,7 @@ export default async function handler(
     // Check if file exists
     try {
       await fs.access(filePath);
-    } catch (error) {
+    } catch {
       console.error('File path issue:', filePath);
       return res.status(500).json({ error: 'Flashcard data file not found' });
     }
@@ -51,14 +51,8 @@ export default async function handler(
     const arrayContent = currentContent.substring(arrayStart + 'export const flashcardsData: FlashcardData[] = ['.length, arrayEnd);
     const afterArray = currentContent.substring(arrayEnd);
 
-    // Start and end pattern for a card object with the target word
-    // This is more specific to the card structure in your file
-    const cardStartPattern = /\s*\{(?:\s*"word":|[\s\S]*?"word":)/;
-    const cardEndPattern = /\},?/;
-
     // Split array content into individual card strings
     const cardStrings = [];
-    let currentPosition = 0;
     let nestingLevel = 0;
     let currentCard = '';
     let inString = false;

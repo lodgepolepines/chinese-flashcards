@@ -6,8 +6,21 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, List } from 'lucide-react';
 
+// Or define it directly if you prefer:
+interface FlashCard {
+  word: string;
+  pinyin: string;
+  translation: string;
+  example: string;
+  etymology: string;
+  character_components: {
+    [key: string]: string | string[];  // Now accepts either a string or array of strings
+  };
+  korean_translation: string;
+}
+
 interface VocabListProps {
-  cards: Array<any>; // Use your FlashcardWithStats type here
+  cards: Array<FlashCard>;
 }
 
 const VocabList = ({ cards }: VocabListProps) => {
