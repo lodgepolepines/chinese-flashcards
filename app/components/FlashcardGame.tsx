@@ -16,7 +16,6 @@ const PasswordGate = ({ onCorrectPassword }: { onCorrectPassword: () => void }) 
     const [error, setError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Replace this with your pre-computed hash
     const CORRECT_HASH = "d5195dceb1b1c2ac4ff7f2e83ac1a6f3f5a5f24370bf3c35c371ead8e5f40a8a";
 
     const handleSubmit = async (e: React.FormEvent) => {
