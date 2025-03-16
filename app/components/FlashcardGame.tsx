@@ -279,13 +279,11 @@ const FlashcardGame = () => {
     
             if (!response.ok) {
                 console.error(`Failed to delete flashcard. Status: ${response.status}, Response: ${responseText || 'No response text'}`);
-                // Optional: You can restore the card to the state if deletion fails
-                // But this might be confusing for users
             } else {
                 console.log('Successfully deleted flashcard');
             }
         } catch (error) {
-            console.error('Network error when deleting flashcard:', error);
+            console.error('Error when deleting flashcard:', error);
         }
     };
 
