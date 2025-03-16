@@ -1,6 +1,6 @@
 {
   "name": "chinese-flashcards",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "homepage": "https://lodgepolepines.github.io/chinese-flashcards",
   "private": true,
   "scripts": {
@@ -12,7 +12,7 @@
     "deploy": "gh-pages -d out"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.33.1",
+    "@anthropic-ai/sdk": "^0.39.0",
     "@google-cloud/text-to-speech": "^5.8.1",
     "@radix-ui/react-collapsible": "^1.1.2",
     "@radix-ui/react-label": "^2.1.2",
