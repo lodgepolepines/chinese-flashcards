@@ -19,10 +19,10 @@ const WordEntry: React.FC<WordEntryProps> = ({ onNewCard }) => {
     if (!word.trim()) return;
     
     setIsLoading(true);
-    setError(null);https://claude.ai/chat/953c3b25-91ca-494f-9ae8-d58e3081633a
+    setError(null);
     
     try {
-      // Update this URL to your Cloudflare Worker URL
+      // Use the full, correct URL of your Cloudflare Worker
       const WORKER_URL = 'https://chinese-flashcard-generator.iamtimzhu.workers.dev';
       
       const response = await fetch(WORKER_URL, {
