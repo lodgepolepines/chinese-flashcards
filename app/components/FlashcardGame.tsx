@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, RotateCcw, Sun, Moon, Trash2, Lock, Volume2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Sun, Moon, Trash2, Lock, Volume2, Archive } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import WordEntry from './WordEntry';
 import VocabList from './VocabList';
@@ -175,6 +175,7 @@ const FlashcardGame = () => {
     const [cardsStudied, setCardsStudied] = useState(new Set<number>());
     const [isClient, setIsClient] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [removedCardsCount, setRemovedCardsCount] = useState(0);
 
     // Fetch flashcards from the API
     const fetchFlashcards = async () => {
@@ -188,12 +189,31 @@ const FlashcardGame = () => {
             
             const data = await response.json();
             setCards(shuffleArray(data || []));
+            
+            // Also fetch stats
+            fetchStats();
         } catch (error) {
             console.error('Error fetching flashcards:', error);
             // Fallback to an empty array if fetch fails
             setCards([]);
         } finally {
             setIsLoading(false);
+        }
+    };
+    
+    // Fetch stats including removed cards count
+    const fetchStats = async () => {
+        try {
+            const response = await fetch(`${FLASHCARD_API_URL}/stats`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch stats');
+            }
+            
+            const data = await response.json();
+            setRemovedCardsCount(data.removedCount || 0);
+        } catch (error) {
+            console.error('Error fetching stats:', error);
         }
     };
 
@@ -313,7 +333,13 @@ const FlashcardGame = () => {
                 const errorData = await response.json();
                 console.error('Failed to delete flashcard:', errorData.error);
             } else {
+                const data = await response.json();
                 console.log('Successfully deleted flashcard');
+                
+                // Update the removed cards count
+                if (data.removedCount !== undefined) {
+                    setRemovedCardsCount(data.removedCount);
+                }
             }
         } catch (error) {
             console.error('Error when deleting flashcard:', error);
@@ -356,14 +382,22 @@ const FlashcardGame = () => {
     return (
         <div className="fixed inset-0 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-slate-900 overflow-auto">
             <div className="flex flex-col items-center max-w-2xl mx-auto px-6 pt-6 pb-24 min-h-full">
-                <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={toggleTheme}
-                    className="self-end bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                    {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                </Button>
+                <div className="flex justify-between w-full">
+                    <div className="flex items-center">
+                        <Archive className="h-4 w-4 mr-2 text-amber-500" />
+                        <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                            {removedCardsCount} Cards Removed
+                        </span>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={toggleTheme}
+                        className="bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                        {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                    </Button>
+                </div>
 
                 <div className="w-full space-y-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mt-4">
                     <div className="space-y-2">
