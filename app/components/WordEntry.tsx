@@ -30,8 +30,18 @@ interface WordEntryProps {
         });
   
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to generate flashcard');
+          try {
+            const errorData = await response.json();
+            const errorMessage = errorData.error || 
+                                 `Request failed with status ${response.status}: ${response.statusText}`;
+            console.error('API Error:', errorData);
+            throw new Error(errorMessage);
+          } catch (error: unknown) {
+            // Handle case where response is not valid JSON
+            const parseError = error instanceof Error ? error : new Error(String(error));
+            throw new Error(`Failed to generate flashcard. Status: ${response.status}. 
+                            ${parseError.message ? 'Parse error: ' + parseError.message : ''}`);
+          }
         }
   
         const data = await response.json();
