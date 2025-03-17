@@ -23,7 +23,7 @@ const WordEntry: React.FC<WordEntryProps> = ({ onNewCard }) => {
     
     try {
       // Update this URL to your Cloudflare Worker URL
-      const WORKER_URL = 'https://chinese-flashcard-generator.workers.dev';
+      const WORKER_URL = 'https://chinese-flashcard-generator.iamtimzhu.workers.dev';
       
       const response = await fetch(WORKER_URL, {
         method: 'POST',
