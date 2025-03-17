@@ -45,7 +45,7 @@ export default {
         });
       }
 
-      // Call the Anthropic API
+      // Call the Anthropic API directly, matching the structure used in the Next.js implementation
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -60,15 +60,15 @@ export default {
             {
               role: "user",
               content: `For the Chinese word/phrase "${word}", provide the following in a JSON format:
-                {
-                  "pinyin": "(with tone marks)",
-                  "translation": "(common English meanings)",
-                  "example": "(a simple Chinese sentence using the word or phrase)",
-                  "etymology": "(evolution of word, or origin including from popular culture)",
-                  "character_components": "(break down characters by radicals and other components) in this style - 
-                  {"我":"戈 (radical for 'spear') + 折 (to bend)","心":"心 (radical for 'heart')","情":"忄 (radical for 'heart') + 青 (green/blue)","很":"彳 (radical for 'step') + 艮 (mountain/stop)","好":"女 (radical for 'female') + 子 (child)"}",
-                  "korean_translation": "(Korean translation)"
-                }`
+{
+  "pinyin": "(with tone marks)",
+  "translation": "(common English meanings)",
+  "example": "(a simple Chinese sentence using the word or phrase)",
+  "etymology": "(evolution of word, or origin including from popular culture)",
+  "character_components": "(break down characters by radicals and other components) in this style - 
+  {"我":"戈 (radical for 'spear') + 折 (to bend)","心":"心 (radical for 'heart')","情":"忄 (radical for 'heart') + 青 (green/blue)","很":"彳 (radical for 'step') + 艮 (mountain/stop)","好":"女 (radical for 'female') + 子 (child)"}",
+  "korean_translation": "(Korean translation)"
+}`
             }
           ],
           temperature: 0.7,
@@ -84,8 +84,10 @@ export default {
         });
       }
 
-      const data = await response.json();
-      return new Response(JSON.stringify(data), {
+      const anthropicResponse = await response.json();
+
+      // Return the same response structure as the original Next.js implementation
+      return new Response(JSON.stringify(anthropicResponse), {
         headers: getCORSHeaders(),
       });
     } catch (error) {

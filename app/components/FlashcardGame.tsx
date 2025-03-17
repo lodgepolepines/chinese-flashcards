@@ -6,9 +6,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronLeft, ChevronRight, RotateCcw, Sun, Moon, Trash2, Lock, Volume2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { flashcardsData, FlashcardData } from '../data/flashcardData';
 import WordEntry from './WordEntry';
 import VocabList from './VocabList';
+
+// Define the FlashcardData type
+export interface FlashcardData {
+  id?: string;
+  word: string;
+  pinyin: string;
+  translation: string;
+  example: string;
+  etymology: string;
+  character_components: {
+    [key: string]: string | string[];
+  };
+  korean_translation: string;
+}
 
 // Password protection component
 const PasswordGate = ({ onCorrectPassword }: { onCorrectPassword: () => void }) => {
@@ -148,6 +161,9 @@ const SpeakButton = ({ text, variant = "default" }: { text: string, variant?: "d
 
 const FlashcardGame = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    // API URL for your flashcard worker
+    const FLASHCARD_API_URL = 'https://flashcard-data.iamtimzhu.workers.dev';
+    
     const shuffleArray = (array: FlashcardData[]): FlashcardData[] => {
         return [...array].sort(() => Math.random() - 0.5);
     };
@@ -158,6 +174,28 @@ const FlashcardGame = () => {
     const [theme, setTheme] = useState('light');
     const [cardsStudied, setCardsStudied] = useState(new Set<number>());
     const [isClient, setIsClient] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Fetch flashcards from the API
+    const fetchFlashcards = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetch(`${FLASHCARD_API_URL}/flashcards`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch flashcards');
+            }
+            
+            const data = await response.json();
+            setCards(shuffleArray(data || []));
+        } catch (error) {
+            console.error('Error fetching flashcards:', error);
+            // Fallback to an empty array if fetch fails
+            setCards([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
         setIsClient(true);
@@ -166,20 +204,28 @@ const FlashcardGame = () => {
             setTheme('dark');
             document.documentElement.classList.add('dark');
         }
-        setCards(shuffleArray(flashcardsData));
         
         // Check authentication
         const authStatus = sessionStorage.getItem('isAuthenticated');
         if (authStatus === 'true') {
             setIsAuthenticated(true);
+            // Fetch flashcards only after authentication
+            fetchFlashcards();
         }
     }, []);
+
+    // Fetch flashcards when authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchFlashcards();
+        }
+    }, [isAuthenticated]);
 
     if (!isAuthenticated) {
         return <PasswordGate onCorrectPassword={() => setIsAuthenticated(true)} />;
     }
 
-    if (!isClient) {
+    if (!isClient || isLoading) {
         return (
             <div className="flex flex-col items-center gap-4 w-full max-w-2xl mx-auto p-4">
                 <Card className="min-h-[400px] max-h-[600px] max-w-md">
@@ -204,7 +250,7 @@ const FlashcardGame = () => {
     };
 
     const shuffleCards = () => {
-        setCards(shuffleArray(flashcardsData));
+        setCards(shuffleArray(cards));
         setCurrentCardIndex(0);
         setIsFlipped(false);
         setCardsStudied(new Set());
@@ -253,32 +299,19 @@ const FlashcardGame = () => {
     
         setIsFlipped(false);
     
-        // Now try to persist the change
+        // Delete card using the API
         try {
             console.log('Sending delete request for word:', cardToRemove.word);
             
-            const response = await fetch('/api/delete-flashcard', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    word: cardToRemove.word 
-                })
+            const response = await fetch(`${FLASHCARD_API_URL}/flashcards/${encodeURIComponent(cardToRemove.word)}`, {
+                method: 'DELETE'
             });
     
             console.log('Delete response status:', response.status);
             
-            let responseText;
-            try {
-                responseText = await response.text();
-                console.log('Response text:', responseText);
-            } catch (textError) {
-                console.error('Error reading response text:', textError);
-            }
-    
             if (!response.ok) {
-                console.error(`Failed to delete flashcard. Status: ${response.status}, Response: ${responseText || 'No response text'}`);
+                const errorData = await response.json();
+                console.error('Failed to delete flashcard:', errorData.error);
             } else {
                 console.log('Successfully deleted flashcard');
             }
@@ -287,13 +320,14 @@ const FlashcardGame = () => {
         }
     };
 
-    const progressPercentage = (cardsStudied.size / cards.length) * 100;
+    const progressPercentage = cards.length > 0 ? (cardsStudied.size / cards.length) * 100 : 0;
 
     const handleNewCard = async (cardData: FlashcardData) => {
+        // Add card to local state first
         setCards(currentCards => [...currentCards, cardData]);
 
         try {
-            const response = await fetch('/api/save-flashcard', {
+            const response = await fetch(`${FLASHCARD_API_URL}/flashcards`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -303,6 +337,16 @@ const FlashcardGame = () => {
 
             if (!response.ok) {
                 throw new Error('Failed to save flashcard');
+            }
+            
+            // If the API returns the card with an ID, update it in the state
+            const data = await response.json();
+            if (data.card && data.card.id) {
+                setCards(currentCards => 
+                    currentCards.map(card => 
+                        card.word === cardData.word ? { ...card, id: data.card.id } : card
+                    )
+                );
             }
         } catch (error) {
             console.error('Error saving flashcard:', error);
@@ -334,60 +378,71 @@ const FlashcardGame = () => {
 
                     <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600 dark:text-gray-300">
-                            Card {currentCardIndex + 1} of {cards.length}
+                            {cards.length > 0 ? `Card ${currentCardIndex + 1} of ${cards.length}` : 'No cards yet'}
                         </span>
                     </div>
                 </div>
 
-                <Card 
-                    className="min-h-[400px] max-h-[600px] w-full cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-lg hover:shadow-xl transition-shadow duration-200 mt-4"
-                    onClick={toggleFlip}
-                >
-                    <CardContent className="h-full flex items-center justify-center p-6 relative">
-                        {!isFlipped ? (
-                            <div className="relative top-20 text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-rose-600 dark:from-red-400 dark:to-rose-400">
-                                {cards[currentCardIndex]?.word}
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <p className="text-xl sm:text-2xl text-blue-600 dark:text-blue-400">
-                                    {cards[currentCardIndex]?.pinyin}
-                                </p>
-                                <p className="text-lg sm:text-xl font-medium text-purple-600 dark:text-purple-400">
-                                    {cards[currentCardIndex]?.translation}
-                                </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
-                                    {cards[currentCardIndex]?.example}
-                                    <SpeakButton text={cards[currentCardIndex]?.example || ''} variant="inline" />
-                                </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {cards[currentCardIndex]?.etymology}
-                                </p>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">
-                                    <h4 className="font-medium">Character Components:</h4>
-                                    {Object.entries(cards[currentCardIndex]?.character_components || {}).map(([char, components]) => (
-                                        <p key={char}>
-                                            {char}: {Array.isArray(components) ? components.join(' • ') : components}
-                                        </p>
-                                    ))}
+                {cards.length > 0 ? (
+                    <Card 
+                        className="min-h-[400px] max-h-[600px] w-full cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-lg hover:shadow-xl transition-shadow duration-200 mt-4"
+                        onClick={toggleFlip}
+                    >
+                        <CardContent className="h-full flex items-center justify-center p-6 relative">
+                            {!isFlipped ? (
+                                <div className="relative top-20 text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-rose-600 dark:from-red-400 dark:to-rose-400">
+                                    {cards[currentCardIndex]?.word}
                                 </div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">
-                                <h4 className="font-medium">Korean Translation:</h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {cards[currentCardIndex]?.korean_translation}
-                                </p>
+                            ) : (
+                                <div className="space-y-4">
+                                    <p className="text-xl sm:text-2xl text-blue-600 dark:text-blue-400">
+                                        {cards[currentCardIndex]?.pinyin}
+                                    </p>
+                                    <p className="text-lg sm:text-xl font-medium text-purple-600 dark:text-purple-400">
+                                        {cards[currentCardIndex]?.translation}
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+                                        {cards[currentCardIndex]?.example}
+                                        <SpeakButton text={cards[currentCardIndex]?.example || ''} variant="inline" />
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        {cards[currentCardIndex]?.etymology}
+                                    </p>
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                        <h4 className="font-medium">Character Components:</h4>
+                                        {Object.entries(cards[currentCardIndex]?.character_components || {}).map(([char, components]) => (
+                                            <p key={char}>
+                                                {char}: {Array.isArray(components) ? components.join(' • ') : components}
+                                            </p>
+                                        ))}
+                                    </div>
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                    <h4 className="font-medium">Korean Translation:</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        {cards[currentCardIndex]?.korean_translation}
+                                    </p>
+                                    </div>
                                 </div>
+                            )}
+                            <SpeakButton text={cards[currentCardIndex]?.word || ''} />
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Card className="min-h-[400px] max-h-[600px] w-full mt-4">
+                        <CardContent className="h-full flex items-center justify-center p-6">
+                            <div className="text-center text-gray-500 dark:text-gray-400">
+                                <p className="text-xl">No flashcards yet</p>
+                                <p className="mt-2">Add a new word below to get started</p>
                             </div>
-                        )}
-                        <SpeakButton text={cards[currentCardIndex]?.word || ''} />
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <div className="flex justify-between w-full gap-4 mt-4">
                     <Button 
                         variant="outline"
                         onClick={previousCard}
-                        disabled={currentCardIndex === 0}
+                        disabled={currentCardIndex === 0 || cards.length === 0}
                         className="flex-1 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 shadow-sm"
                     >
                         <ChevronLeft className="h-4 w-4 mr-2" />
@@ -397,6 +452,7 @@ const FlashcardGame = () => {
                     <Button
                         variant="outline"
                         onClick={shuffleCards}
+                        disabled={cards.length <= 1}
                         className="flex-1 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 shadow-sm"
                     >
                         <RotateCcw className="h-4 w-4 mr-2" />
@@ -406,7 +462,7 @@ const FlashcardGame = () => {
                     <Button
                         variant="outline"
                         onClick={nextCard}
-                        disabled={currentCardIndex === cards.length - 1}
+                        disabled={currentCardIndex === cards.length - 1 || cards.length === 0}
                         className="flex-1 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 shadow-sm"
                     >
                         <span className="hidden sm:inline">Next</span>

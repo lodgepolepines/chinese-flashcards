@@ -1,0 +1,7 @@
+name = "flashcard-data"
+main = "worker.js"
+compatibility_date = "2023-10-16"
+
+[[kv_namespaces]]
+binding = "FLASHCARDS"
+id = "f651c0ec2ae14735aaf38c37a312e3e0"
