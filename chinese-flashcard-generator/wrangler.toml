@@ -1,0 +1,14 @@
+name = "chinese-flashcard-generator"
+compatibility_date = "2023-09-01"
+main = "src/worker.ts"
+
+# Environment variables in the dev environment
+[vars]
+# CLAUDE_API_KEY = "your-dev-api-key-here" # Uncomment and add your dev key for local testing
+
+# Production environment
+[env.production]
+# Production-specific settings can go here
+
+# Use Cloudflare dashboard UI to set the production CLAUDE_API_KEY as a secret
+# Run: wrangler secret put CLAUDE_API_KEY --env production
